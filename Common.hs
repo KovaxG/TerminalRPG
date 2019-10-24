@@ -6,20 +6,25 @@ import           Data.Maybe (fromMaybe)
 
 
 data World = World {
+  levels :: Map.Map String Level,
+  currentLevel :: Level,
+  textField :: Maybe TextField,
+  settings :: Settings,
+  triggers :: [Trigger]
+} deriving (Show)
+
+data Level = Level {
+  name :: String,
   bounds :: Bounds,
   tiles :: Store Tile,
   entities :: Store Entity,
   player :: Position,
-  facing :: Direction,
-  textField :: Maybe TextField,
-  settings :: Settings
+  facing :: Direction
 } deriving (Show)
 
 data Direction = North | South | East | West deriving (Show)
 
-data Input = Move Direction
-           | Interact
-           deriving (Show)
+data Input = Move Direction | Interact deriving (Show)
 
 data Position = P Int Int deriving (Show, Eq, Ord)
 
@@ -28,6 +33,18 @@ data WorldMap = WorldMap  (Store Tile) deriving (Show)
 data Bounds = RB Int Int Int Int deriving (Show)
 
 data TileBase = Void | Grass | Wall deriving (Show)
+
+data Trigger = Trigger String deriving (Show, Eq)
+
+data EntityEffect = EntityEffect String TriggerDiff deriving (Show)
+
+data TriggerDiff = AddTrigger Trigger | RemoveTrigger Trigger deriving (Show)
+
+data TriggerCondition = Missing Trigger | Exists Trigger | Always deriving (Show)
+
+data Store a = Store (Map.Map Position a) deriving (Show)
+
+data Sprite = Sprite Char deriving (Show)
 
 data Tile = Tile {
   isPassable :: Bool,
@@ -39,11 +56,16 @@ data Settings = Settings {
   textBoxHeight :: Int
 } deriving (Show)
 
-
 data TextField = TextField {
   text :: [[String]],
   total :: Int,
   current :: Int
+} deriving (Show)
+
+data Entity = Entity {
+  name :: String,
+  effects :: [(TriggerCondition, EntityEffect)],
+  sprite :: Sprite
 } deriving (Show)
 
 toText :: Settings -> String -> Maybe TextField
@@ -65,10 +87,16 @@ toText Settings{textBoxWidth,textBoxHeight} str =
           | length (l ++ " " ++ w) < textBoxWidth = (l ++ " " ++ w):ls
           | otherwise = w:l:ls
 
-data Entity = Entity {
-  name :: String,
-  message :: String
-} deriving (Show)
+applyDiff :: [Trigger] -> TriggerDiff -> [Trigger]
+applyDiff ts (AddTrigger t)
+  | elem t ts = ts
+  | otherwise = t : ts
+applyDiff ts (RemoveTrigger t) = filter (/=t) ts
+
+checkRules :: [Trigger] -> TriggerCondition -> Bool
+checkRules ts (Exists t) = elem t ts
+checkRules ts (Missing t) = not $ elem t ts
+checkRules _ Always = True
 
 voidTile :: Tile
 voidTile = Tile { isPassable = False, tileBase = Void }
@@ -104,13 +132,8 @@ chunksOf i ls = map (take i) (build (splitter ls))
     build :: ((a -> [a] -> [a]) -> [a] -> [a]) -> [a]
     build g = g (:) []
 
-setTextField :: Maybe TextField -> World -> World
-setTextField mtf w = w { textField = mtf }
-
 clearTextField :: World -> World
 clearTextField w = w { textField = Nothing }
-
-data Store a = Store (Map.Map Position a) deriving (Show)
 
 get :: Store a -> Position -> Maybe a
 get (Store innerMap) = flip Map.lookup innerMap

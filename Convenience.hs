@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NamedFieldPuns, DuplicateRecordFields #-}
 module Convenience where
 
 import qualified Data.Map as Map
@@ -7,12 +7,22 @@ import           Data.List (groupBy)
 import Common
 
 draw :: World -> String
-draw World{player, facing, bounds, tiles, entities, textField, settings} =
+draw World{currentLevel=level@Level{player, facing, bounds, tiles, entities}, textField, triggers, settings} =
   unlines [
+    drawDebug triggers,
     drawFacing facing,
-    drawMap tiles bounds entities player,
+    drawMap level,
     maybe "" (drawTextField settings) textField
     ]
+
+drawDebug :: [Trigger] -> String
+drawDebug =
+  (++) "Debug:\n"
+  . (++) "Triggers: "
+  . (++"\n")
+  . unwords
+  . map (\(Trigger name) -> name)
+
 
 drawFacing :: Direction -> String
 drawFacing dir = "Facing: " ++ case dir of
@@ -38,14 +48,15 @@ drawTextField Settings{textBoxWidth} TextField{text, current} =
     surroundWithPadding l =
       "|" ++ l ++ replicate (textBoxWidth - 1 - length l) ' ' ++ "|"
 
-drawMap :: Store Tile -> Bounds -> Store Entity -> Position -> String
-drawMap ts (RB sx sy ex ey) (Store es) player =
-  (++) "\n\n"
+
+drawMap :: Level -> String
+drawMap Level{name, tiles, bounds = (RB sx sy ex ey), entities = (Store es), player} =
+  (++) ("\n\n" ++ "Level: " ++ name ++ "\n")
     $ unlines
     $ addUpperLowerBound
     $ map surround
     $ map (
-        (=<<) (insertPlayerOrEntity (maybe " " toString . get ts))
+        (=<<) (insertPlayerOrEntity (maybe " " toString . get tiles))
       )
     $ groupBy rows
     $ [P x y | y <- [sy .. ey], x <- [sx .. ex]]
@@ -61,8 +72,7 @@ drawMap ts (RB sx sy ex ey) (Store es) player =
     insertPlayerOrEntity :: (Position -> String) -> Position -> String
     insertPlayerOrEntity f p
       | p == player = "P"
-      | elem p entityPositions = "E"
-      | otherwise = f p
+      | otherwise = maybe (f p) (\(Sprite c) -> c:"") $ fmap sprite $ get (Store es) p
       where
         entityPositions = map fst $ Map.toList es
 
@@ -110,22 +120,37 @@ myMap = addExtra entities $ parseMap [
 
     entities :: Store Entity
     entities = Store $ Map.fromList [
-        (P 6 2, Entity "Secret" "You found me! Now try to implement the thing that would make me speak only when you are next to me, not stepping on me, since that crap kind of hurts and I don't appreaciate it at all.")
+        (P 6 2, Entity {
+          name = "Secret",
+          effects = [(Exists (Trigger "test"), EntityEffect "You found me! Good job my dude." $ RemoveTrigger (Trigger "test"))],
+          sprite = Sprite 'X'
+          }),
+        (P 14 1, Entity {
+          name = "Second Secret",
+          effects = [(Missing (Trigger "test"), EntityEffect "Here, you can find the first secret again!" $ AddTrigger (Trigger "test"))],
+          sprite = Sprite 'S'
+        })
       ]
 
 
 startWorld :: World
 startWorld =
   World {
-    bounds,
-    tiles,
-    player = newPos 2 2,
-    facing = South,
+    levels = Map.fromList [(name (currentLevel :: Level), currentLevel)],
+    currentLevel,
     textField = toText settings "Hello, my name is Gyuri, what is going on with you? Are you enjoying your new job? I sure hope you are.",
-    entities,
-    settings
+    settings,
+    triggers = [Trigger "test"]
   }
   where
+    currentLevel = Level {
+      name = "First",
+      bounds,
+      tiles,
+      entities,
+      player = newPos 2 2,
+      facing = South
+    }
     (tiles, bounds, entities) = myMap
     settings = Settings { textBoxWidth = 30, textBoxHeight = 3 }
 
