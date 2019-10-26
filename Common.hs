@@ -6,7 +6,7 @@ import           Data.Maybe (fromMaybe)
 
 
 data World = World {
-  levels :: Map.Map String Level,
+  levels :: Map.Map LevelName Level,
   currentLevel :: Level,
   textField :: Maybe TextField,
   settings :: Settings,
@@ -14,12 +14,19 @@ data World = World {
 } deriving (Show)
 
 data Level = Level {
-  name :: String,
+  name :: LevelName,
   bounds :: Bounds,
   tiles :: Store Tile,
   entities :: Store Entity,
+  teleports :: Store Teleport,
   player :: Position,
   facing :: Direction
+} deriving (Show)
+
+newtype LevelName = LevelName String deriving (Show, Ord, Eq)
+
+data Teleport = Teleport {
+  targetMap :: LevelName
 } deriving (Show)
 
 data Direction = North | South | East | West deriving (Show)
@@ -134,6 +141,9 @@ chunksOf i ls = map (take i) (build (splitter ls))
 
 clearTextField :: World -> World
 clearTextField w = w { textField = Nothing }
+
+asStore :: [(Position, a)] -> Store a
+asStore = Store . Map.fromList
 
 get :: Store a -> Position -> Maybe a
 get (Store innerMap) = flip Map.lookup innerMap

@@ -50,7 +50,7 @@ drawTextField Settings{textBoxWidth} TextField{text, current} =
 
 
 drawMap :: Level -> String
-drawMap Level{name, tiles, bounds = (RB sx sy ex ey), entities = (Store es), player} =
+drawMap Level{name=(LevelName name), tiles, bounds = (RB sx sy ex ey), entities = (Store es), player} =
   (++) ("\n\n" ++ "Level: " ++ name ++ "\n")
     $ unlines
     $ addUpperLowerBound
@@ -103,57 +103,6 @@ parseMap = toMap . process
         toTile ' ' = Tile { isPassable = True, tileBase = Grass }
         toTile '█' = Tile { isPassable = False, tileBase = Wall }
         toTile 'X' = voidTile
-
-
-myMap :: (Store Tile, Bounds, Store Entity)
-myMap = addExtra entities $ parseMap [
-  "                 ",
-  "   █████         ",
-  "   █   █         ",
-  "   ██ ██         ",
-  "                 ",
-  "                 "
-  ]
-  where
-    addExtra :: c -> (a,b) -> (a,b,c)
-    addExtra c (a,b) = (a,b,c)
-
-    entities :: Store Entity
-    entities = Store $ Map.fromList [
-        (P 6 2, Entity {
-          name = "Secret",
-          effects = [(Exists (Trigger "test"), EntityEffect "You found me! Good job my dude." $ RemoveTrigger (Trigger "test"))],
-          sprite = Sprite 'X'
-          }),
-        (P 14 1, Entity {
-          name = "Second Secret",
-          effects = [(Missing (Trigger "test"), EntityEffect "Here, you can find the first secret again!" $ AddTrigger (Trigger "test"))],
-          sprite = Sprite 'S'
-        })
-      ]
-
-
-startWorld :: World
-startWorld =
-  World {
-    levels = Map.fromList [(name (currentLevel :: Level), currentLevel)],
-    currentLevel,
-    textField = toText settings "Hello, my name is Gyuri, what is going on with you? Are you enjoying your new job? I sure hope you are.",
-    settings,
-    triggers = [Trigger "test"]
-  }
-  where
-    currentLevel = Level {
-      name = "First",
-      bounds,
-      tiles,
-      entities,
-      player = newPos 2 2,
-      facing = South
-    }
-    (tiles, bounds, entities) = myMap
-    settings = Settings { textBoxWidth = 30, textBoxHeight = 3 }
-
 
 horBox :: Int -> String
 horBox len = "+" ++ replicate len '-' ++ "+"

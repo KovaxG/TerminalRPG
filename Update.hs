@@ -5,7 +5,7 @@ module Update (
 
 import           Data.List
 import qualified Data.Map as Map
-import           Data.Maybe (isNothing)
+import           Data.Maybe (isNothing, fromJust)
 import           Debug.Trace
 
 import Common
@@ -13,6 +13,7 @@ import Common
 update :: Input -> World -> World
 update input world@World {
     currentLevel=level@Level{ entities, player, facing },
+    levels,
     textField,
     settings,
     triggers
@@ -20,7 +21,7 @@ update input world@World {
   case input of
     (Move direction) ->
       let level' = if isNothing textField
-                   then movePlayer direction level
+                   then movePlayer direction level levels
                    else level
       in world { currentLevel = level' }
     Interact ->
@@ -38,12 +39,16 @@ getEntity direction player entities = orElse inFrontOfPlayer underPlayer
     inFrontOfPlayer = get entities $ translate direction player
     underPlayer = get entities player
 
-movePlayer :: Direction -> Level -> Level
-movePlayer direction level@Level{ bounds, tiles, player } =
+
+movePlayer :: Direction -> Level -> Map.Map LevelName Level -> Level
+movePlayer direction level@Level{ bounds, tiles, player, teleports } levels =
   let playerPosition' = snapBounds bounds $ translate direction player
   in if canGoTo tiles playerPosition'
-     then level { facing = direction, player = playerPosition' }
+     then maybe level { facing = direction, player = playerPosition' }
+                (fromJust . flip Map.lookup levels . targetMap) -- TODO dangerous
+                (get teleports playerPosition')
      else level { facing = direction }
+
 
 cycleTextField :: World -> World
 cycleTextField w@World{textField=(Just tf@TextField{current,total})}
