@@ -39,7 +39,15 @@ data WorldMap = WorldMap  (Store Tile) deriving (Show)
 
 data Bounds = RB Int Int Int Int deriving (Show)
 
-data TileBase = Void | Grass | Wall deriving (Show)
+data TileBase = Void
+              | Wall
+              | Grass
+              | HorBorder
+              | LeftSlope
+              | RightSlope
+              | WindowedWall
+              | InteriorWindow
+              deriving (Show)
 
 data Trigger = Trigger String deriving (Show, Eq)
 

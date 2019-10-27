@@ -10,7 +10,7 @@ draw :: World -> String
 draw World{currentLevel=level@Level{player, facing, bounds, tiles, entities}, textField, triggers, settings} =
   unlines [
     drawDebug triggers,
-    drawFacing facing,
+    drawPlayerInfo facing player,
     drawMap level,
     maybe "" (drawTextField settings) textField
     ]
@@ -24,8 +24,8 @@ drawDebug =
   . map (\(Trigger name) -> name)
 
 
-drawFacing :: Direction -> String
-drawFacing dir = "Facing: " ++ case dir of
+drawPlayerInfo :: Direction -> Position -> String
+drawPlayerInfo dir pos = show pos ++ ", Facing: " ++ case dir of
   North -> "^"
   South -> "v"
   West -> "<"
@@ -81,9 +81,14 @@ drawMap Level{name=(LevelName name), tiles, bounds = (RB sx sy ex ey), entities 
 
     toString :: Tile -> String
     toString Tile {tileBase} = case tileBase of
-      Grass -> " "
-      Wall -> "█"
-      Void -> "X"
+      InteriorWindow -> "─"
+      WindowedWall   -> "▄"
+      RightSlope     -> "\\"
+      LeftSlope      -> "/"
+      HorBorder      -> "_"
+      Grass          -> " "
+      Wall           -> "█"
+      Void           -> "X"
 
 parseMap :: [String] -> (Store Tile, Bounds)
 parseMap = toMap . process
@@ -100,9 +105,15 @@ parseMap = toMap . process
         $ map toTile raw
       where
         toTile :: Char -> Tile
-        toTile ' ' = Tile { isPassable = True, tileBase = Grass }
-        toTile '█' = Tile { isPassable = False, tileBase = Wall }
-        toTile 'X' = voidTile
+        toTile c = case c of
+          '─'  -> Tile { isPassable = False, tileBase = InteriorWindow }
+          '▄'  -> Tile { isPassable = False, tileBase = WindowedWall   }
+          '\\' -> Tile { isPassable = False, tileBase = RightSlope     }
+          '/'  -> Tile { isPassable = False, tileBase = LeftSlope      }
+          '_'  -> Tile { isPassable = False, tileBase = HorBorder      }
+          ' '  -> Tile { isPassable = True,  tileBase = Grass          }
+          '█'  -> Tile { isPassable = False, tileBase = Wall           }
+          _    -> voidTile
 
 horBox :: Int -> String
 horBox len = "+" ++ replicate len '-' ++ "+"

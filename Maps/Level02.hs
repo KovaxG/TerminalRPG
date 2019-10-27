@@ -7,24 +7,24 @@ import Convenience
 level02 :: Level
 level02 =
   Level {
-    name = LevelName "Wall",
+    name = LevelName "Interior",
     bounds,
     tiles,
     entities = asStore ents,
     teleports = asStore tels,
-    player = newPos 2 2,
+    player = newPos 6 4,
     facing = South
   }
   where
     (tiles, bounds) = parseMap theMap
 
 theMap = [
-  "       █     ",
-  "       █     ",
-  "       █     ",
-  "       █     ",
-  "       █     ",
-  "       █     "
+  "█████████████",
+  "█           █",
+  "█           █",
+  "█           █",
+  "█           █",
+  "██████ ██──██"
   ]
 
 ents = [
@@ -32,12 +32,9 @@ ents = [
       name = "Secret",
       effects = [(Exists (Trigger "test"), EntityEffect "You found me! Good job my dude." $ RemoveTrigger (Trigger "test"))],
       sprite = Sprite 'X'
-      }),
-    (P 14 1, Entity {
-      name = "Second Secret",
-      effects = [(Missing (Trigger "test"), EntityEffect "Here, you can find the first secret again!" $ AddTrigger (Trigger "test"))],
-      sprite = Sprite 'S'
-    })
+      })
   ]
 
-tels = []
+tels = [
+  (P 6 5, Teleport $ LevelName "Exterior")
+  ]

@@ -7,7 +7,7 @@ import Convenience
 level01 :: Level
 level01 =
   Level {
-    name = LevelName "Test",
+    name = LevelName "Exterior",
     bounds,
     tiles,
     entities = asStore ents,
@@ -20,19 +20,17 @@ level01 =
 
 theMap = [
   "                 ",
-  "   █████         ",
-  "   █   █         ",
-  "   ██ ██         ",
+  "                 ",
+  "   ____          ",
+  "  /____\\         ",
+  "  ██████         ",
+  "  ██ █▄█         ",
+  "                 ",
   "                 ",
   "                 "
   ]
 
 ents = [
-    (P 6 2, Entity {
-      name = "Secret",
-      effects = [(Exists (Trigger "test"), EntityEffect "You found me! Good job my dude." $ RemoveTrigger (Trigger "test"))],
-      sprite = Sprite 'X'
-      }),
     (P 14 1, Entity {
       name = "Second Secret",
       effects = [(Missing (Trigger "test"), EntityEffect "Here, you can find the first secret again!" $ AddTrigger (Trigger "test"))],
@@ -41,5 +39,5 @@ ents = [
   ]
 
 tels = [
-  (P 0 0, Teleport $ LevelName "Wall")
+  (P 4 5, Teleport $ LevelName "Interior")
   ]
