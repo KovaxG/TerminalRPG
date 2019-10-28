@@ -26,7 +26,8 @@ data Level = Level {
 newtype LevelName = LevelName String deriving (Show, Ord, Eq)
 
 data Teleport = Teleport {
-  targetMap :: LevelName
+  targetMap :: LevelName,
+  targetPosition :: Position
 } deriving (Show)
 
 data Direction = North | South | East | West deriving (Show)

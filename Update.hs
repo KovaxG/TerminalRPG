@@ -13,11 +13,7 @@ import Common
 update :: Input -> World -> World
 update input world@World {
     currentLevel=level@Level{ entities, player, facing },
-    levels,
-    textField,
-    settings,
-    triggers
-  } =
+    levels, textField, settings, triggers } =
   case input of
     (Move direction) ->
       let level' = if isNothing textField
@@ -45,9 +41,13 @@ movePlayer direction level@Level{ bounds, tiles, player, teleports } levels =
   let playerPosition' = snapBounds bounds $ translate direction player
   in if canGoTo tiles playerPosition'
      then maybe level { facing = direction, player = playerPosition' }
-                (fromJust . flip Map.lookup levels . targetMap) -- TODO dangerous
+                (teleportToLevel levels)
                 (get teleports playerPosition')
      else level { facing = direction }
+  where
+    teleportToLevel :: Map.Map LevelName Level -> Teleport -> Level
+    teleportToLevel levels tel = newLevel { player = targetPosition tel }
+      where newLevel = fromJust $ Map.lookup (targetMap tel) levels
 
 
 cycleTextField :: World -> World

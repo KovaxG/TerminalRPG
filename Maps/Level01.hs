@@ -22,7 +22,7 @@ theMap = [
   "                 ",
   "                 ",
   "   ____          ",
-  "  /____\\         ",
+  "  /    \\         ",
   "  ██████         ",
   "  ██ █▄█         ",
   "                 ",
@@ -39,5 +39,5 @@ ents = [
   ]
 
 tels = [
-  (P 4 5, Teleport $ LevelName "Interior")
+  (P 4 5, Teleport { targetMap = LevelName "Interior", targetPosition = P 6 4 })
   ]

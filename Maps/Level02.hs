@@ -36,5 +36,5 @@ ents = [
   ]
 
 tels = [
-  (P 6 5, Teleport $ LevelName "Exterior")
+  (P 6 5, Teleport { targetMap = LevelName "Exterior", targetPosition = P 4 6 })
   ]
