@@ -43,8 +43,18 @@ data Bounds = RB Int Int Int Int deriving (Show)
 data TileBase = Void
               | Wall
               | Grass
+              | VerLine
+              | DHorLine
               | HorBorder
               | LeftSlope
+              | BoxTileLS
+              | BoxTileRS
+              | CornerULSD
+              | CornerURSD
+              | BoxTileULC
+              | BoxTileURC
+              | BoxTileLLC
+              | BoxTileLRC
               | RightSlope
               | WindowedWall
               | InteriorWindow

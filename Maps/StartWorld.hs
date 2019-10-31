@@ -6,6 +6,7 @@ import Common
 
 import Maps.Level01
 import Maps.Level02
+import Maps.Level03
 
 startWorld :: World
 startWorld =
@@ -17,5 +18,5 @@ startWorld =
     triggers = [Trigger "test"]
   }
   where
-    levels = Map.fromList $ map (\l -> (name (l :: Level), l)) [level01, level02]
+    levels = Map.fromList $ map (\l -> (name (l :: Level), l)) [level01, level02, level03]
     settings = Settings { textBoxWidth = 30, textBoxHeight = 3 }

@@ -31,30 +31,32 @@ drawPlayerInfo dir pos = show pos ++ ", Facing: " ++ case dir of
   West -> "<"
   East -> ">"
 
+
 drawTextField :: Settings -> TextField -> String
 drawTextField Settings{textBoxWidth} TextField{text, current} =
-  unlines ["\n", horizontal, text', horizontal, "\n"]
+  surroundWithBox
+    $ init
+    $ unlines
+    $ map addPadding
+    $ text !! (current-1)
   where
-    horizontal :: String
-    horizontal = horBox (textBoxWidth-1)
+    addPadding :: String -> String
+    addPadding l = l ++ replicate (textBoxWidth - 1 - length l) ' '
 
-    text' :: String
-    text' = init
-            $ unlines
-            $ map surroundWithPadding
-            $ text !! (current-1)
 
-    surroundWithPadding :: String -> String
-    surroundWithPadding l =
-      "|" ++ l ++ replicate (textBoxWidth - 1 - length l) ' ' ++ "|"
+surroundWithBox :: String -> String
+surroundWithBox t =
+  unlines $ horLine "┌" "┐" ++ map (\l -> "│" ++ l ++ "│") ls ++ horLine "└" "┘"
+  where
+    ls = lines t
+    horLine a b = [a ++ replicate (length $ head ls) '─' ++ b]
 
 
 drawMap :: Level -> String
 drawMap Level{name=(LevelName name), tiles, bounds = (RB sx sy ex ey), entities = (Store es), player} =
   (++) ("\n\n" ++ "Level: " ++ name ++ "\n")
+    $ surroundWithBox
     $ unlines
-    $ addUpperLowerBound
-    $ map surround
     $ map (
         (=<<) (insertPlayerOrEntity (maybe " " toString . get tiles))
       )
@@ -67,7 +69,7 @@ drawMap Level{name=(LevelName name), tiles, bounds = (RB sx sy ex ey), entities 
 
 
     surround :: String -> String
-    surround l = "|" ++ l ++ "|"
+    surround l = "│" ++ l ++ "│"
 
     insertPlayerOrEntity :: (Position -> String) -> Position -> String
     insertPlayerOrEntity f p
@@ -84,8 +86,18 @@ drawMap Level{name=(LevelName name), tiles, bounds = (RB sx sy ex ey), entities 
       InteriorWindow -> "─"
       WindowedWall   -> "▄"
       RightSlope     -> "\\"
+      BoxTileULC     -> "┌"
+      BoxTileURC     -> "┐"
+      BoxTileLLC     -> "└"
+      BoxTileLRC     -> "┘"
+      CornerULSD     -> "╒"
+      CornerURSD     -> "╕"
+      BoxTileLS      -> "├"
+      BoxTileRS      -> "┤"
       LeftSlope      -> "/"
       HorBorder      -> "_"
+      DHorLine       -> "═"
+      VerLine        -> "│"
       Grass          -> " "
       Wall           -> "█"
       Void           -> "X"
@@ -109,8 +121,18 @@ parseMap = toMap . process
           '─'  -> Tile { isPassable = False, tileBase = InteriorWindow }
           '▄'  -> Tile { isPassable = False, tileBase = WindowedWall   }
           '\\' -> Tile { isPassable = False, tileBase = RightSlope     }
+          '┌'  -> Tile { isPassable = False, tileBase = BoxTileULC     }
+          '┐'  -> Tile { isPassable = False, tileBase = BoxTileURC     }
+          '└'  -> Tile { isPassable = False, tileBase = BoxTileLLC     }
+          '┘'  -> Tile { isPassable = False, tileBase = BoxTileLRC     }
+          '╒'  -> Tile { isPassable = False, tileBase = CornerULSD     }
+          '╕'  -> Tile { isPassable = False, tileBase = CornerURSD     }
+          '├'  -> Tile { isPassable = False, tileBase = BoxTileLS      }
+          '┤'  -> Tile { isPassable = False, tileBase = BoxTileRS      }
           '/'  -> Tile { isPassable = False, tileBase = LeftSlope      }
           '_'  -> Tile { isPassable = False, tileBase = HorBorder      }
+          '═'  -> Tile { isPassable = False, tileBase = DHorLine       }
+          '│'  -> Tile { isPassable = False, tileBase = VerLine        }
           ' '  -> Tile { isPassable = True,  tileBase = Grass          }
           '█'  -> Tile { isPassable = False, tileBase = Wall           }
           _    -> voidTile
